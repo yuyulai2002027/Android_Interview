@@ -240,8 +240,9 @@ function parse(md){
   return parts;
 }
 
-function mdToHtml(lines){
-  return marked.parse(lines.join('\n').trim(), { gfm:true, breaks:false });
+function mdToHtml(src){
+  const text = Array.isArray(src) ? src.join('\n') : String(src ?? '');
+  return marked.parse(text.trim(), { gfm:true, breaks:false });
 }
 
 function el(tag, cls, html){
@@ -427,9 +428,20 @@ Promise.all([
 ])
   .then(([md, ansMd]) => {
     if (ansMd) answers = parseAnswers(ansMd);
-    render(parse(md));
+    try {
+      render(parse(md));
+    } catch (e) {
+      document.getElementById('app').innerHTML =
+        `<div class="err"><h3>課表載入了，但畫面產生失敗</h3>
+          <p class="note">${e.message}</p>
+          <p>檔案都抓到了，是渲染時出錯。把上面這行訊息告訴我就能定位。</p>
+        </div>`;
+      throw e;
+    }
   })
   .catch(err => {
+    if (!err || err.message === 'render') return;
+    if (document.querySelector('.err')) return;
     const tried = err.url || new URL(SRC, location.href).href;
     const status = err.status;
     let cause;
