@@ -419,22 +419,42 @@ function parseAnswers(md){
 }
 
 Promise.all([
-  fetch(SRC).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
+  fetch(SRC).then(r => {
+    if (!r.ok) throw Object.assign(new Error('http'), { status: r.status, url: r.url });
+    return r.text();
+  }),
   fetch(ANS).then(r => r.ok ? r.text() : '').catch(() => '')
 ])
   .then(([md, ansMd]) => {
     if (ansMd) answers = parseAnswers(ansMd);
     render(parse(md));
   })
-  .catch(() => {
-    document.getElementById('app').innerHTML = `
-      <div class="err">
-        <h3>讀不到 curriculum.md</h3>
-        <p>瀏覽器不允許用 <code>file://</code> 直接讀取同資料夾的檔案。用本機伺服器打開就正常了：</p>
+  .catch(err => {
+    const tried = err.url || new URL(SRC, location.href).href;
+    const status = err.status;
+    let cause;
+    if (location.protocol === 'file:'){
+      cause = `<p>你是用 <code>file://</code> 打開的，瀏覽器不允許這樣讀取本地檔案。改用本機伺服器：</p>
         <pre>cd 你的資料夾
 python3 -m http.server 8000</pre>
-        <p>然後開 <code>http://localhost:8000</code>。部署到 GitHub Pages 之後不會有這個問題。</p>
-        <p>另一個可能是 <code>curriculum.md</code> 不在 <code>index.html</code> 的同一層。</p>
+        <p>然後開 <code>http://localhost:8000</code>。</p>`;
+    } else if (status === 404){
+      cause = `<p>伺服器回 <b>404</b>，代表那個網址上沒有檔案。三個常見原因：</p>
+        <ul>
+          <li><b>不在同一層</b>：<code>curriculum.md</code> 要跟 <code>index.html</code> 放在一起。</li>
+          <li><b>大小寫不符</b>：GitHub Pages 區分大小寫。</li>
+          <li><b>網址少了結尾斜線</b>：開 <code>/專案名/</code> 而不是 <code>/專案名</code>。</li>
+        </ul>`;
+    } else if (status){
+      cause = `<p>伺服器回 <b>${status}</b>。到 repo 的 Actions 分頁確認部署是否成功，或稍等一分鐘重試。</p>`;
+    } else {
+      cause = `<p>請求本身失敗了。按 F12 開 DevTools 的 Network 分頁重新整理，看 <code>curriculum.md</code> 那一列的狀態碼。</p>`;
+    }
+    document.getElementById('app').innerHTML =
+      `<div class="err"><h3>讀不到 curriculum.md</h3>
+        <p class="note">嘗試的網址：<code>${tried}</code></p>
+        ${cause}
+        <p class="note">直接在網址列打開上面那個網址。看得到內容代表檔案有上去，問題在別處。</p>
       </div>`;
   });
 </script>
