@@ -2,8 +2,9 @@
 
 21 週的每日訓練課表，可勾選、會記住進度。
 
-- `curriculum.md` — 課表內容，唯一的編輯來源
-- `index.html` — 網頁介面，會讀取上面那份 md
+- `curriculum.md` — 課表內容
+- `answers.md` — 對照答案，用 `### Day N` 對應
+- `index.html` — 網頁介面，會讀取上面兩份 md
 
 ## 本機預覽
 

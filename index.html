@@ -130,6 +130,25 @@ details.week[open]>summary::before{transform:rotate(45deg)}
 .md hr{border:0;border-top:1px solid var(--rule);margin:1.4em 0}
 .md a{color:var(--mark)}
 .md strong{font-weight:700}
+.md pre{
+  background:var(--ground);border:1px solid var(--rule);border-radius:4px;
+  padding:13px 15px;overflow-x:auto;font-size:13px;line-height:1.6;margin:.9em 0;
+}
+.md pre code{background:none;padding:0;font-size:13px}
+
+/* ---------- answers ---------- */
+.reveal{
+  margin-top:16px;font:500 13px/1 var(--sans);
+  background:none;border:1px dashed var(--rule);color:var(--soft);
+}
+.reveal:hover{border-style:solid;border-color:var(--mark);color:var(--mark)}
+.answer{
+  margin-top:14px;padding:16px 18px;border-radius:4px;
+  background:var(--ground);border-left:3px solid var(--mark);
+}
+.answer>:first-child{margin-top:0}
+.answer>:last-child{margin-bottom:0}
+.answer table{font-size:13.5px}
 
 /* ---------- reference blocks ---------- */
 details.ref{border-bottom:1px solid var(--rule)}
@@ -175,7 +194,9 @@ details.ref .md{padding-bottom:18px}
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script>
 const SRC = 'curriculum.md';
+const ANS = 'answers.md';
 const KEY = 'androidPrep:v1';
+let answers = {};
 
 const store = {
   read(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } },
@@ -320,6 +341,22 @@ function render(parts){
         head.appendChild(el('h3', 'dayTitle', (t ? t[2] : d.title).replace(/^[（(]/, '（')));
         card.appendChild(head);
         card.appendChild(el('div', 'md', mdToHtml(d.body)));
+
+        const ans = d.n != null ? answers[d.n] : null;
+        if (ans){
+          const panel = el('div', 'answer md', mdToHtml(ans));
+          panel.hidden = true;
+          const btn = el('button', 'reveal', '對答案');
+          btn.setAttribute('aria-expanded', 'false');
+          btn.addEventListener('click', () => {
+            panel.hidden = !panel.hidden;
+            btn.textContent = panel.hidden ? '對答案' : '收起答案';
+            btn.setAttribute('aria-expanded', String(!panel.hidden));
+          });
+          card.appendChild(btn);
+          card.appendChild(panel);
+        }
+
         wrapper.appendChild(card);
       }
       app.appendChild(wrapper);
@@ -369,9 +406,26 @@ document.getElementById('reset').addEventListener('click', () => {
 });
 
 /* --- load --- */
-fetch(SRC)
-  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-  .then(md => render(parse(md)))
+function parseAnswers(md){
+  const out = {};
+  let cur = null;
+  for (const line of md.split('\n')){
+    const m = line.match(/^###\s+Day\s+(\d+)/);
+    if (m){ cur = +m[1]; out[cur] = []; }
+    else if (cur != null && !/^---\s*$/.test(line)) out[cur].push(line);
+  }
+  for (const k in out) out[k] = out[k].join('\n').trim();
+  return out;
+}
+
+Promise.all([
+  fetch(SRC).then(r => { if (!r.ok) throw new Error(r.status); return r.text(); }),
+  fetch(ANS).then(r => r.ok ? r.text() : '').catch(() => '')
+])
+  .then(([md, ansMd]) => {
+    if (ansMd) answers = parseAnswers(ansMd);
+    render(parse(md));
+  })
   .catch(() => {
     document.getElementById('app').innerHTML = `
       <div class="err">
