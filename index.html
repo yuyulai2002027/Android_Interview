@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senior Android 遠端面試課表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#eef1ee;
+  --panel:#fff;
+  --ink:#19211e;
+  --soft:#5c6863;
+  --rule:#d6dcd8;
+  --mark:#2d6a4b;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --serif:"Noto Serif TC","Songti TC",serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--ground:#141816;--panel:#1c221f;--ink:#e4e9e6;--soft:#93a09a;--rule:#2d3733;--mark:#6fbf94}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--ground);color:var(--ink);
+  font:400 16px/1.7 var(--sans);
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px 96px}
+
+/* ---------- header ---------- */
+.bar{
+  position:sticky;top:0;z-index:20;background:var(--ground);
+  border-bottom:1px solid var(--rule);padding:14px 0 0;
+}
+.bar .wrap{padding-bottom:0}
+.barTop{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.today{font:700 15px/1.4 var(--sans)}
+.today b{font:700 22px/1 var(--serif);letter-spacing:.01em}
+.count{margin-left:auto;font:500 13px/1.4 var(--sans);color:var(--soft);font-variant-numeric:tabular-nums}
+.track{height:3px;background:var(--rule);margin-top:12px}
+.fill{height:100%;width:0;background:var(--mark);transition:width .35s ease}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding:10px 0 12px}
+button,input[type=date]{
+  font:500 13px/1 var(--sans);color:var(--ink);background:var(--panel);
+  border:1px solid var(--rule);border-radius:4px;padding:7px 11px;cursor:pointer;
+}
+button:hover{border-color:var(--soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible,
+input[type=checkbox]:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+/* ---------- parts & weeks ---------- */
+h2.part{
+  font:700 15px/1.4 var(--sans);color:var(--soft);
+  margin:52px 0 0;padding-bottom:8px;border-bottom:1px solid var(--rule);
+}
+details.week{border-bottom:1px solid var(--rule)}
+details.week>summary{
+  list-style:none;cursor:pointer;padding:16px 0;
+  display:flex;align-items:center;gap:12px;
+  font:700 18px/1.3 var(--sans);
+}
+details.week>summary::-webkit-details-marker{display:none}
+details.week>summary::before{
+  content:"";width:7px;height:7px;flex:none;
+  border-right:1.5px solid var(--soft);border-bottom:1.5px solid var(--soft);
+  transform:rotate(-45deg);transition:transform .2s ease;
+}
+details.week[open]>summary::before{transform:rotate(45deg)}
+.ratio{margin-left:auto;font:500 13px/1 var(--sans);color:var(--soft);font-variant-numeric:tabular-nums}
+.ratio.done{color:var(--mark)}
+
+/* ---------- day card ---------- */
+.day{
+  background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+  padding:20px 22px;margin:0 0 14px;position:relative;
+}
+.day:last-child{margin-bottom:22px}
+.dayHead{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.num{font:700 15px/1 var(--serif);color:var(--soft);flex:none;font-variant-numeric:tabular-nums}
+.dayTitle{font:700 17px/1.45 var(--sans);margin:0}
+.day.done{opacity:.55}
+.day.done .num{color:var(--mark)}
+.day.now{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--mark)}
+.nowTag{
+  display:inline-block;margin-bottom:10px;padding:3px 9px;border-radius:3px;
+  background:var(--mark);color:var(--panel);font:700 12px/1.5 var(--sans);
+}
+@media (min-width:760px){
+  .day{padding-left:96px}
+  .dayHead{display:block;margin-bottom:6px}
+  .num{position:absolute;left:22px;top:21px;font-size:26px;line-height:1.1}
+}
+
+/* ---------- markdown body ---------- */
+.md{font-size:15.5px}
+.md p{margin:.65em 0}
+.md ul,.md ol{margin:.5em 0;padding-left:1.35em}
+.md li{margin:.3em 0}
+.md li::marker{color:var(--soft)}
+.md ul:has(>li>input),.md ul.tasks{list-style:none;padding-left:0}
+.md li:has(>input){
+  display:flex;gap:11px;align-items:flex-start;
+  padding:7px 0;border-top:1px solid var(--rule);
+}
+.md li:has(>input):first-child{border-top:none}
+.md li:has(>input) ul,.md li:has(>input) ol{flex-basis:100%}
+.md input[type=checkbox]{
+  appearance:none;flex:none;width:17px;height:17px;margin:4px 0 0;
+  border:1.5px solid var(--soft);border-radius:3px;background:var(--panel);cursor:pointer;
+}
+.md input[type=checkbox]:checked{background:var(--mark);border-color:var(--mark)}
+.md input[type=checkbox]:checked::after{
+  content:"";display:block;width:4px;height:9px;margin:1px 0 0 5px;
+  border:solid var(--panel);border-width:0 2px 2px 0;transform:rotate(45deg);
+}
+.md li:has(>input:checked){color:var(--soft)}
+.md code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;
+  background:var(--ground);padding:1px 5px;border-radius:3px;
+}
+.md blockquote{
+  margin:.9em 0;padding:2px 0 2px 14px;border-left:2px solid var(--mark);
+  color:var(--soft);font-size:14.5px;
+}
+.md table{border-collapse:collapse;width:100%;margin:1em 0;font-size:14px;display:block;overflow-x:auto}
+.md th,.md td{border:1px solid var(--rule);padding:7px 10px;text-align:left}
+.md th{background:var(--ground);font-weight:700}
+.md hr{border:0;border-top:1px solid var(--rule);margin:1.4em 0}
+.md a{color:var(--mark)}
+.md strong{font-weight:700}
+
+/* ---------- reference blocks ---------- */
+details.ref{border-bottom:1px solid var(--rule)}
+details.ref>summary{
+  list-style:none;cursor:pointer;padding:15px 0;font:500 16px/1.4 var(--sans);
+}
+details.ref>summary::-webkit-details-marker{display:none}
+details.ref>summary::before{content:"+ ";color:var(--soft)}
+details.ref[open]>summary::before{content:"– "}
+details.ref .md{padding-bottom:18px}
+
+.note{color:var(--soft);font-size:14px;margin:18px 0}
+.err{background:var(--panel);border:1px solid var(--rule);border-radius:5px;padding:22px;margin-top:32px}
+.err h3{margin:0 0 10px;font-size:17px}
+.err pre{background:var(--ground);padding:12px;border-radius:4px;overflow-x:auto;font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <div class="barTop">
+      <div class="today" id="todayLine">Senior Android 遠端面試課表</div>
+      <div class="count" id="count"></div>
+    </div>
+    <div class="track"><div class="fill" id="fill"></div></div>
+    <div class="tools">
+      <label style="display:flex;align-items:center;gap:7px;font:500 13px var(--sans);color:var(--soft)">
+        開始日期 <input type="date" id="start">
+      </label>
+      <button id="jump">跳到今天</button>
+      <button id="collapse">收合全部</button>
+      <button id="reset">清除進度</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+  <p class="note">載入課表中…</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+const SRC = 'curriculum.md';
+const KEY = 'androidPrep:v1';
+
+const store = {
+  read(){ try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } },
+  write(o){ try { localStorage.setItem(KEY, JSON.stringify(o)); } catch {} }
+};
+let state = store.read();
+
+/* stable id from the item's own text, so reordering days keeps your ticks */
+function hash(s){
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return 'i' + (h >>> 0).toString(36);
+}
+
+/* --- parse: h1 = part, h2 = week/section, h3 = day --- */
+function parse(md){
+  const lines = md.split('\n');
+  const parts = [];
+  let part = null, group = null, day = null;
+  const push = l => (day || group || part)?.body.push(l);
+
+  for (const line of lines){
+    let m;
+    if ((m = line.match(/^#\s+(.*)/))){
+      part = { title: m[1].trim(), body: [], groups: [] };
+      parts.push(part); group = null; day = null;
+    } else if ((m = line.match(/^##\s+(.*)/))){
+      if (!part){ part = { title:'', body:[], groups:[] }; parts.push(part); }
+      group = { title: m[1].trim(), body: [], days: [] };
+      part.groups.push(group); day = null;
+    } else if ((m = line.match(/^###\s+(.*)/))){
+      if (!group){ group = { title:'', body:[], days:[] }; (part.groups ||= []).push(group); }
+      const t = m[1].trim();
+      const n = t.match(/^Day\s+(\d+)/);
+      day = { n: n ? +n[1] : null, title: t, body: [] };
+      group.days.push(day);
+    } else if (/^---\s*$/.test(line)){
+      /* drop the separators between days */
+    } else push(line);
+  }
+  return parts;
+}
+
+function mdToHtml(lines){
+  return marked.parse(lines.join('\n').trim(), { gfm:true, breaks:false });
+}
+
+function el(tag, cls, html){
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html != null) n.innerHTML = html;
+  return n;
+}
+
+/* --- checkbox wiring --- */
+function activate(scope){
+  scope.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.disabled = false;
+    const li = cb.closest('li');
+    const id = hash((li ? li.textContent : cb.parentElement.textContent).trim());
+    cb.dataset.id = id;
+    cb.checked = !!state[id];
+    cb.addEventListener('change', () => {
+      if (cb.checked) state[id] = 1; else delete state[id];
+      store.write(state);
+      refresh();
+    });
+  });
+}
+
+function refresh(){
+  const all = [...document.querySelectorAll('.md input[type=checkbox]')];
+  const done = all.filter(c => c.checked).length;
+  document.getElementById('count').textContent = `完成 ${done} / ${all.length}`;
+  document.getElementById('fill').style.width = all.length ? (done / all.length * 100) + '%' : '0';
+
+  document.querySelectorAll('.day').forEach(d => {
+    const boxes = [...d.querySelectorAll('input[type=checkbox]')];
+    d.classList.toggle('done', boxes.length > 0 && boxes.every(b => b.checked));
+  });
+  document.querySelectorAll('details.week').forEach(w => {
+    const boxes = [...w.querySelectorAll('input[type=checkbox]')];
+    const r = w.querySelector('.ratio');
+    if (!r) return;
+    const n = boxes.filter(b => b.checked).length;
+    r.textContent = boxes.length ? `${n} / ${boxes.length}` : '';
+    r.classList.toggle('done', boxes.length > 0 && n === boxes.length);
+  });
+}
+
+/* --- which Day is today --- */
+function currentDay(){
+  const s = localStorage.getItem(KEY + ':start');
+  if (!s) return null;
+  const a = new Date(s + 'T00:00:00'), b = new Date();
+  b.setHours(0,0,0,0);
+  return Math.floor((b - a) / 864e5) + 1;
+}
+
+function render(parts){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  const dayNow = currentDay();
+
+  for (const part of parts){
+    const hasDays = part.groups.some(g => g.days.length);
+
+    /* a part with no sub-sections (the appendices) collapses on its own */
+    if (!part.groups.length && part.body.join('').trim()){
+      const d = el('details', 'ref');
+      d.appendChild(el('summary', null, `<span>${part.title}</span>`));
+      d.appendChild(el('div', 'md', mdToHtml(part.body)));
+      app.appendChild(d);
+      continue;
+    }
+
+    if (part.title) app.appendChild(el('h2', 'part', part.title));
+    if (part.body.join('').trim())
+      app.appendChild(el('div', 'md', mdToHtml(part.body)));
+
+    for (const g of part.groups){
+      const wrapper = el('details', hasDays && g.days.length ? 'week' : 'ref');
+      const sum = el('summary');
+      sum.appendChild(el('span', null, g.title));
+      if (g.days.length) sum.appendChild(el('span', 'ratio'));
+      wrapper.appendChild(sum);
+
+      if (g.body.join('').trim())
+        wrapper.appendChild(el('div', 'md', mdToHtml(g.body)));
+
+      for (const d of g.days){
+        const card = el('div', 'day');
+        card.id = d.n ? 'day-' + d.n : '';
+        if (dayNow && d.n === dayNow){
+          card.classList.add('now');
+          card.appendChild(el('span', 'nowTag', '今天'));
+          wrapper.open = true;
+        }
+        const head = el('div', 'dayHead');
+        const t = d.title.match(/^(Day\s+\d+)(.*)$/);
+        head.appendChild(el('span', 'num', t ? t[1].replace('Day ', '') : ''));
+        head.appendChild(el('h3', 'dayTitle', (t ? t[2] : d.title).replace(/^[（(]/, '（')));
+        card.appendChild(head);
+        card.appendChild(el('div', 'md', mdToHtml(d.body)));
+        wrapper.appendChild(card);
+      }
+      app.appendChild(wrapper);
+    }
+  }
+
+  activate(app);
+  refresh();
+
+  const line = document.getElementById('todayLine');
+  if (dayNow && dayNow >= 1 && document.getElementById('day-' + dayNow)){
+    line.innerHTML = `今天是 <b>Day ${dayNow}</b>`;
+  } else if (dayNow && dayNow < 1){
+    line.textContent = `課表將於 ${Math.abs(dayNow) + 1} 天後開始`;
+  } else if (dayNow){
+    line.textContent = `Day ${dayNow} — 第一階段已走完`;
+  } else {
+    line.textContent = '設定開始日期，就會標出今天該做哪一天';
+  }
+}
+
+/* --- controls --- */
+const startInput = document.getElementById('start');
+startInput.value = localStorage.getItem(KEY + ':start') || '';
+startInput.addEventListener('change', () => {
+  localStorage.setItem(KEY + ':start', startInput.value);
+  location.reload();
+});
+document.getElementById('jump').addEventListener('click', () => {
+  const n = currentDay();
+  const target = n && document.getElementById('day-' + n);
+  if (target){
+    target.closest('details').open = true;
+    target.scrollIntoView({ behavior:'smooth', block:'center' });
+  } else {
+    alert('先在上方設定開始日期。');
+  }
+});
+document.getElementById('collapse').addEventListener('click', () => {
+  document.querySelectorAll('details').forEach(d => d.open = false);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('清除所有打勾紀錄？開始日期會保留。')) return;
+  state = {}; store.write(state);
+  document.querySelectorAll('.md input[type=checkbox]').forEach(c => c.checked = false);
+  refresh();
+});
+
+/* --- load --- */
+fetch(SRC)
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(md => render(parse(md)))
+  .catch(() => {
+    document.getElementById('app').innerHTML = `
+      <div class="err">
+        <h3>讀不到 curriculum.md</h3>
+        <p>瀏覽器不允許用 <code>file://</code> 直接讀取同資料夾的檔案。用本機伺服器打開就正常了：</p>
+        <pre>cd 你的資料夾
+python3 -m http.server 8000</pre>
+        <p>然後開 <code>http://localhost:8000</code>。部署到 GitHub Pages 之後不會有這個問題。</p>
+        <p>另一個可能是 <code>curriculum.md</code> 不在 <code>index.html</code> 的同一層。</p>
+      </div>`;
+  });
+</script>
+</body>
+</html>
